@@ -15,8 +15,8 @@ pygame.init()
 
 # Set up the window
 window_width, window_height = 500, 500
-window = pygame.display.set_mode((window_width, window_height))
-pygame.display.set_caption("Draw Drone Path")
+# window = pygame.display.set_mode((window_width, window_height))
+# pygame.display.set_caption("Draw Drone Path")
 
 # Init Tello object that interacts with the Tello drone
 tello = Tello()
@@ -85,16 +85,18 @@ send_rc_control = False
 pygame.time.set_timer(pygame.USEREVENT + 1, 1000 // FPS)
 
 # Get exported data in folders
-path_export = r"/Users/damon/ComputerVision/images_from_dron"
-export_path = r"/Users/damon/ComputerVision/exported_data"
+path_export = r"/Users/damon/ComputerVision/object_detection/images_from_dron"
+export_path = r"/Users/damon/ComputerVision//object_detectionexported_data"
 
 # Custom YOLOv5 model
-model = torch.hub.load(r'/Users/damon/ComputerVision/yolov5', 'custom',
-                       path=r"/Users/damon/ComputerVision/yolov5m.pt", source="local")  # load silently)
+model = torch.hub.load(r'/Users/damon/ComputerVision/object_detection/yolov5', 'custom',
+                       path=r"/Users/damon/ComputerVision/object_detection/yolov5m.pt", source="local")  # load silently)
 
 model.conf = 0.2  # NMS confidence threshold
 model.iou = 0.7  # NMS IoU threshold
 saved_data = []
+
+
 
 tello.is_flying
 def run():
@@ -110,29 +112,31 @@ def run():
 
     frame_read = tello.get_frame_read()
 
+    # Subscribe to Tello flight data
+    # tello.subscribe(tello.EVENT_FLIGHT_DATA, handler)
+
     should_stop = False
     while not should_stop:
-        print('Tello is flying:', tello.is_flying)
         for event in pygame.event.get():
             if event.type == pygame.USEREVENT + 1:
                 update()
             elif event.type == pygame.QUIT:
-                automaticLand()
+                # automaticLand()
                 should_stop = True
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    automaticLand()
+                    # automaticLand()
                     should_stop = True
                 else:
                     keydown(event.key)
             elif event.type == pygame.KEYUP:
-                automaticTakeoff()
+                # automaticTakeoff()
                 keyup(event.key)
 
         if frame_read.stopped:
             break
 
-        draw(path)
+        # draw(path)
 
         frame = frame_read.frame
         # model
@@ -151,7 +155,7 @@ def run():
         # frame = pygame.surfarray.make_surface(frame)
 
         # Draw the window
-        pygame.display.update()
+        # pygame.display.update()
 
         time.sleep(1 / FPS)
 
@@ -169,22 +173,22 @@ def keydown(key):
     if key == pygame.K_UP:  # set forward velocity
         for_back_velocity = S
         start_pos[1] -= 10
-        draw(path.append(tuple(start_pos)))
+        # draw(path.append(tuple(start_pos)))
         store_letter('up')
     elif key == pygame.K_DOWN:  # set backward velocity
         for_back_velocity = -S
         start_pos[1] += 10
-        draw(path.append(tuple(start_pos)))
+        # draw(path.append(tuple(start_pos)))
         store_letter('down')
     elif key == pygame.K_LEFT:  # set left velocity
         left_right_velocity = -S
         start_pos[0] -= 10
-        draw(path.append(tuple(start_pos)))
+        # draw(path.append(tuple(start_pos)))
         store_letter('left')
     elif key == pygame.K_RIGHT:  # set right velocity
         left_right_velocity = S
         start_pos[0] += 10
-        draw(path.append(tuple(start_pos)))
+        # draw(path.append(tuple(start_pos)))
         store_letter('right')
     elif key == pygame.K_w:  # set up velocity
         up_down_velocity = S
@@ -195,7 +199,6 @@ def keydown(key):
         store_letter('rotleft')
     elif key == pygame.K_d:  # set yaw clockwise velocity
         yaw_velocity = S
-
         store_letter('rotright')
 
 def keyup(key):
@@ -218,11 +221,13 @@ def keyup(key):
         yaw_velocity = 0
 
     elif key == pygame.K_t:  # takeoff
-        tello.takeoff()
+        # tello.takeoff()
+        automaticTakeoff()
         send_rc_control = True
 
     elif key == pygame.K_l:  # land
-        tello.land()
+        # tello.land()
+        automaticLand()
         send_rc_control = False
 
 
@@ -259,4 +264,26 @@ def automaticTakeoff():
     if (tello.is_flying == False):
         tello.takeoff()
 
+def testKey():
+    should_stop = False
+    while not should_stop:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                print('QUIT')
+                should_stop = True
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    should_stop = True
+                else:
+                    keydown(event.key)
+            elif event.type == pygame.KEYUP:
+                keyup(event.key)
+
+def handler(event, sender, data, **args):
+    drone = sender
+    if event is drone.EVENT_FLIGHT_DATA:
+        # perform actions here
+        print('Data flight %d',data)
+
 run()
+# testKey()
