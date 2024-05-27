@@ -21,6 +21,12 @@ window_width, window_height = 500, 500
 # Init Tello object that interacts with the Tello drone
 tello = Tello()
 
+latitudeBase = -34.9179
+longitudeBase = -56.1674
+
+coordinates = [longitudeBase, latitudeBase]
+tempCoordinates = [0,0]
+
 # Set up colors
 RED = (194, 24, 7)
 BLUE = (0, 0, 255)
@@ -100,7 +106,7 @@ saved_data = []
 
 tello.is_flying
 def run():
-    global for_back_velocity, left_right_velocity, up_down_velocity, yaw_velocity, send_rc_control
+    global for_back_velocity, left_right_velocity, up_down_velocity, yaw_velocity, send_rc_control, tempCoordinates, coordinates
 
     tello.connect()
     tello.set_speed(speed)  # <-- set speed 10cm/s
@@ -151,6 +157,11 @@ def run():
         # frame = np.rot90(frame)
         # frame = np.flipud(frame)
 
+        coordinatesText = ','.join(map(str,coordinates))
+        print(coordinatesText)
+        cv2.putText(frame, coordinatesText, (5, 35),
+           cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+
         cv2.imshow("YOLOv5", frame)
         # frame = pygame.surfarray.make_surface(frame)
 
@@ -164,7 +175,7 @@ def run():
 
 
 def keydown(key):
-    global for_back_velocity, left_right_velocity, up_down_velocity, yaw_velocity
+    global for_back_velocity, left_right_velocity, up_down_velocity, yaw_velocity, coordinates
 
     """ Update velocities based on key pressed
     Arguments:
@@ -173,21 +184,29 @@ def keydown(key):
     if key == pygame.K_UP:  # set forward velocity
         for_back_velocity = S
         start_pos[1] -= 10
+        coordinates[1] -= 0.0001
+        coordinates[1] = round(coordinates[1], 4)
         # draw(path.append(tuple(start_pos)))
         store_letter('up')
     elif key == pygame.K_DOWN:  # set backward velocity
         for_back_velocity = -S
         start_pos[1] += 10
+        coordinates[1] += 0.0001
+        coordinates[1] = round(coordinates[1], 4)
         # draw(path.append(tuple(start_pos)))
         store_letter('down')
     elif key == pygame.K_LEFT:  # set left velocity
         left_right_velocity = -S
         start_pos[0] -= 10
+        coordinates[0] -= 0.0001
+        coordinates[0] = round(coordinates[0], 4)
         # draw(path.append(tuple(start_pos)))
         store_letter('left')
     elif key == pygame.K_RIGHT:  # set right velocity
         left_right_velocity = S
         start_pos[0] += 10
+        coordinates[0] += 0.0001
+        coordinates[0] = round(coordinates[0], 4)
         # draw(path.append(tuple(start_pos)))
         store_letter('right')
     elif key == pygame.K_w:  # set up velocity
